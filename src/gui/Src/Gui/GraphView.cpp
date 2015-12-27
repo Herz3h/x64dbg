@@ -10,7 +10,8 @@ void deleteControlFlowGraph(ControlFlowGraph* ctrlFlowGraph)
 GraphView::GraphView(QWidget *parent) :
     QWidget(parent),
     mVLayout(new QVBoxLayout()),
-    mControlFlowGraph(new ControlFlowGraph, deleteControlFlowGraph)
+    mControlFlowGraph(new ControlFlowGraph, deleteControlFlowGraph),
+    bControlFlowAnalysisStarted(false)
 {
     mButton = new QPushButton("Run the cfanalyze command or click this button to start analysis", this);
 
@@ -21,11 +22,19 @@ GraphView::GraphView(QWidget *parent) :
     connect(mButton, SIGNAL(clicked()), this, SLOT(startControlFlowAnalysis()));
     connect(Bridge::getBridge(), SIGNAL(setControlFlowInfos(duint*)), this, SLOT(setControlFlowInfosSlot(duint*)));
     connect(Bridge::getBridge(), SIGNAL(dbgStateChanged(DBGSTATE)), this, SLOT(dbgStateChangedSlot(DBGSTATE)));
+    connect(Bridge::getBridge(), SIGNAL(disassembleAt(dsint,dsint)), this, SLOT(drawGraphAtAddressSlot(dsint, dsint)));
 }
 
 GraphView::~GraphView()
 {
     mVLayout->deleteLater();
+}
+
+duint GraphView::getEip()
+{
+    REGDUMP regDump;
+    DbgGetRegDump(&regDump);
+    return regDump.regcontext.cip;
 }
 
 void GraphView::setControlFlowInfosSlot(duint *controlFlowInfos)
@@ -43,7 +52,7 @@ void GraphView::setControlFlowInfosSlot(duint *controlFlowInfos)
         auto controlFlowStruct = reinterpret_cast<CONTROLFLOWINFOS*>(controlFlowInfos);
         auto basicBlockInfo = reinterpret_cast<BASICBLOCKMAP*>(controlFlowStruct->blocks);
         mControlFlowGraph->setBasicBlocks(basicBlockInfo);
-        mControlFlowGraph->setupGraph();
+        mControlFlowGraph->drawGraphAtSlot(mEip, mEip);
     }
 }
 
@@ -54,13 +63,19 @@ void GraphView::startControlFlowAnalysis()
         QMessageBox::information(this, "Not debugging", "This only works on a debugged process !");
         return;
     }
+
+    mEip = getEip();
     mButton->hide();
     mControlFlowGraph->startControlFlowAnalysis();
+    bControlFlowAnalysisStarted = true;
 }
 
-void GraphView::drawGraphAtSlot(duint va)
+void GraphView::drawGraphAtAddressSlot(dsint va, dsint eip)
 {
-    mControlFlowGraph->drawGraphAtSlot(va);
+    mEip = eip;
+
+    if(bControlFlowAnalysisStarted)
+        mControlFlowGraph->drawGraphAtSlot(va, eip);
 }
 
 void GraphView::dbgStateChangedSlot(DBGSTATE state)

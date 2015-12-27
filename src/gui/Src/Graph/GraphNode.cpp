@@ -1,15 +1,17 @@
 #include "GraphNode.h"
-
-#include <QStyleOption>
+#include <iostream>
+#include "Configuration.h"
 
 GraphNode::GraphNode() : QFrame()
 {
 }
 
-GraphNode::GraphNode(std::vector<Instruction_t> &instructionsVector, duint address)
+GraphNode::GraphNode(std::vector<Instruction_t> &instructionsVector, std::vector<duint> &instructionsAddresses, duint address, duint eip)
     :
     mAddress(address),
     mInstructionsVector(instructionsVector),
+    mInstructionsAddresses(instructionsAddresses),
+    mEip(eip),
     mHighlightInstructionAt(-1)
 {
     updateTokensVector();
@@ -51,15 +53,11 @@ void GraphNode::paintEvent(QPaintEvent* event)
     painter.drawLine(mCachedWidth-1, mLineHeight, mCachedWidth-1, mCachedHeight-1);
     painter.drawLine(0, mCachedHeight-1, mCachedWidth-1, mCachedHeight-1);
 
-//    QStyleOption opt;
-//    opt.init(this);
-//    style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);
-
     //draw node contents
     painter.setFont(this->mFont);
     int i = 0;
 
-    int x = mSpacingX/2, y = mLineHeight + mSpacingY/2;
+    int x = mSpacingX * 0.5 + mSpacingBreakpoint, y = mLineHeight + mSpacingY * 0.5;
 
     // Block address
     painter.fillRect(0, 0, mCachedWidth, mLineHeight, Qt::cyan);
@@ -69,13 +67,50 @@ void GraphNode::paintEvent(QPaintEvent* event)
     // Block instructions
     for(QList<RichTextPainter::CustomRichText_t> &richText : mRichTextVector)
     {
+
         RichTextPainter::paintRichText(&painter, x, y, mCachedWidth, mLineHeight, 0, &richText, QFontMetrics(this->mFont).width(QChar(' ')));
+
+        // Draw circle if on a BP
+        if(DbgGetBpxTypeAt(mInstructionsAddresses[i]) != bp_none)
+        {
+            duint circleRadius = mSpacingBreakpoint * 0.3;
+            duint circleCenterX = mSpacingBreakpoint * 0.9;
+            duint circleCenterY = y + (mLineHeight * 0.5);
+            painter.setBrush(QBrush(ConfigColor("DisassemblyBreakpointBackgroundColor")));
+            painter.drawEllipse(QPointF(circleCenterX, circleCenterY), circleRadius, circleRadius);
+        }
+
+        // Draw EIP "cursor"
+        if(mInstructionsAddresses[i] == mEip)
+        {
+
+            duint topLeftArrowX = mSpacingBreakpoint * 0.25;
+            duint topLeftArrowY = y + (mLineHeight * 0.2);
+            duint middleRightArrowX = mSpacingBreakpoint * 0.5;
+            duint middleRightArrowY = y+(mLineHeight * 0.5);
+            duint bottomLeftArrowX = topLeftArrowX;
+            duint bottomLeftArrowY = y + mLineHeight - (mLineHeight * 0.2);
+
+
+            QPointF points[3] =
+            {
+                QPointF(topLeftArrowX, topLeftArrowY),
+                QPointF(middleRightArrowX, middleRightArrowY),
+                QPointF(bottomLeftArrowX, bottomLeftArrowY)
+            };
+
+            painter.setBrush(QBrush(Qt::blue));
+            painter.drawPolygon(points, 3);
+
+            painter.setPen(QPen(Qt::blue, 2));
+            painter.drawLine(0, middleRightArrowY, topLeftArrowX, middleRightArrowY);
+        }
 
         if(mHighlightInstructionAt == i)
             painter.fillRect(0, y, mCachedWidth, mLineHeight, QBrush(QColor(0, 0, 0, 150)));
 
         y += mLineHeight + mLineSpacingY;
-        i++;
+        ++i;
     }
 
 }
@@ -84,7 +119,7 @@ dsint GraphNode::getInstructionIndexAtPos(const QPoint &pos) const
 {
     // Gets the instruction index at the cursor position
     duint instructionIndex = -1;
-    for(duint i = 0; i < mInstructionsVector.size(); i++)
+    for(duint i = 0; i < mInstructionsVector.size(); ++i)
     {
         dsint currentInstructionMinHeight = (i+1) * (mLineHeight + mLineSpacingY) + (mSpacingY/2);
         dsint currentInstructionMaxHeight = (i+2) * (mLineHeight+mLineSpacingY) + (mSpacingY/2);
@@ -143,7 +178,7 @@ bool GraphNode::eventFilter(QObject *object, QEvent *event)
 
 void GraphNode::updateTokensVector()
 {
-    for(duint i=0; i < mInstructionsVector.size(); i++)
+    for(duint i=0; i < mInstructionsVector.size(); ++i)
     {
         mTokensVector.push_back(mInstructionsVector[i].tokens);
     }
@@ -162,7 +197,7 @@ void GraphNode::updateCache()
     QString maxInstruction = getLongestInstruction();
 
     QFontMetrics metrics(this->mFont);
-    mCachedWidth = metrics.width(maxInstruction) + mSpacingX;
+    mCachedWidth = metrics.width(maxInstruction) + mSpacingX + mSpacingBreakpoint;
     mCachedHeight =((metrics.height() + mLineSpacingY) * mInstructionsVector.size()) + metrics.height() + mSpacingY; // +metrics.height() => for block address line
     mLineHeight = metrics.height();
 }

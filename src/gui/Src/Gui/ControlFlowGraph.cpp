@@ -24,6 +24,7 @@ ControlFlowGraph::ControlFlowGraph(QWidget *parent) : QWidget(parent),
     mVLayout->addWidget(mGraphicsView);
     setLayout(mVLayout);
 
+    setupGraph();
 
     connect(Bridge::getBridge(), SIGNAL(setControlFlowInfos(duint*)), this, SLOT(setControlFlowInfosSlot(duint*)));
     connect(Bridge::getBridge(), SIGNAL(disassembleAt(dsint,dsint)), this, SLOT(disassembleAtSlot(dsint, dsint)));
@@ -78,10 +79,6 @@ void ControlFlowGraph::setupGraph()
     //add nodes
     mTree = make_unique<Tree<GraphNode*>>(&mG, mGA.get());
 
-    setupTree();
-
-    addGraphToScene();
-
     // Make sure there is some spacing
     QRectF sceneRect = mGraphicsView->sceneRect();
     sceneRect.adjust(-20, -40, 20, 40);
@@ -93,12 +90,16 @@ void ControlFlowGraph::setupGraph()
 
 void ControlFlowGraph::setupTree(duint va)
 {
+    if(mBasicBlockInfo == nullptr)
+        return;
+
     using namespace ogdf;
     using namespace std;
 
     QTextStream out(stdout);
     BASICBLOCKMAP::iterator it;
     std::vector<Instruction_t> instructionsVector;
+    std::vector<duint> instructionsAddresses;
 
     // Clear graph and tree
     mG.clear();
@@ -116,12 +117,12 @@ void ControlFlowGraph::setupTree(duint va)
 
 
     // Disassemble the instruction at the address
-    readBasicBlockInstructions(it, instructionsVector);
+    readBasicBlockInstructions(it, instructionsVector, instructionsAddresses);
 
     // Add root node first
     duint addr = it->first;
-    mGraphNodeVector->push_back( make_unique<GraphNode>(instructionsVector, addr) );
-    connect(mGraphNodeVector->back().get(), SIGNAL(drawGraphAt(duint)), this, SLOT(drawGraphAtSlot(duint)), Qt::QueuedConnection);
+    mGraphNodeVector->push_back( make_unique<GraphNode>(instructionsVector, instructionsAddresses, addr, mEip) );
+    connect(mGraphNodeVector->back().get(), SIGNAL(drawGraphAt(duint, duint)), this, SLOT(drawGraphAtSlot(duint, duint)), Qt::QueuedConnection);
 
     Node<GraphNode *> *rootNode = mTree->newNode(mGraphNodeVector->back().get());
     addAllNodes(it, rootNode);
@@ -191,9 +192,9 @@ void ControlFlowGraph::addGraphToScene()
     // Change unconditionalBranches colors to something different than for conditional branches
     setUnconditionalBranchEdgeColor();
 
-    mGraphicsView->ensureVisible(mScene->itemsBoundingRect());
+//    mGraphicsView->ensureVisible(mScene->itemsBoundingRect());
 
-    mGraphicsView->setSceneRect(mScene->sceneRect());
+    mGraphicsView->setSceneRect(mScene->itemsBoundingRect());
 }
 
 void ControlFlowGraph::addNodesToScene()
@@ -296,9 +297,10 @@ void ControlFlowGraph::addAllNodes(BASICBLOCKMAP::iterator it, Node<GraphNode *>
             if(node == nullptr)
             {
                 std::vector<Instruction_t> instructionsVector;
-                readBasicBlockInstructions(itChild, instructionsVector);
+                std::vector<duint> instructionsAddresses;
+                readBasicBlockInstructions(itChild, instructionsVector, instructionsAddresses);
 
-                mGraphNodeVector->push_back( make_unique<GraphNode>(instructionsVector, childNodeAddr) );
+                mGraphNodeVector->push_back( make_unique<GraphNode>(instructionsVector, instructionsAddresses, childNodeAddr, mEip) );
 
                 node = mTree->newNode(mGraphNodeVector->back().get());
 
@@ -361,7 +363,7 @@ bool ControlFlowGraph::findBasicBlock(duint& va)
     return bFound;
 }
 
-void ControlFlowGraph::readBasicBlockInstructions(BASICBLOCKMAP::iterator it, std::vector<Instruction_t> &instructionsVector)
+void ControlFlowGraph::readBasicBlockInstructions(BASICBLOCKMAP::iterator it, std::vector<Instruction_t> &instructionsVector, std::vector<duint>& instructionsAddresses)
 {
     duint addr = it->first;
     duint startAddr = it->second.start;
@@ -379,19 +381,35 @@ void ControlFlowGraph::readBasicBlockInstructions(BASICBLOCKMAP::iterator it, st
         Instruction_t wInstruction = mDisas->DisassembleAt(reinterpret_cast<byte_t*>(byteArray.data()), byteArray.length(), 0, baseAddr, startAddr-baseAddr);
 
         instructionsVector.push_back(wInstruction);
+        instructionsAddresses.push_back(startAddr);
         startAddr += wInstruction.length;
     }
 }
 
-void ControlFlowGraph::drawGraphAtSlot(duint va)
+void ControlFlowGraph::drawGraphAtSlot(duint va, duint eip)
 {
+    mEip = eip;
     bool bFound = findBasicBlock(va);
 
     if(!bFound)
+    {
+        QString labelText = "<h1 style='background-color:" + ConfigColor("DisassemblyBackgroundColor").name() + "'>";
+        labelText += "No graph available for current instruction ";
+        labelText += "0x" + QString::number(va, 16).toUpper() + "</h4>";
+
+        QLabel *label = new QLabel(labelText);
+        mScene->clear();
+        mScene->addWidget(label);
+
+        mGraphicsView->setSceneRect(mScene->itemsBoundingRect());
+
         return;
+    }
 
     setupTree(va);
     addGraphToScene();
+
+    mGraphicsView->verticalScrollBar()->setValue(0);
 }
 
 void ControlFlowGraph::setBasicBlocks(BASICBLOCKMAP *basicBlockInfo)

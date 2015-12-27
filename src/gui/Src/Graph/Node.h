@@ -18,6 +18,26 @@ public:
         mRight(nullptr)
     {}
 
+    explicit Node(const Node& node)
+    {
+        mG = node.mG;
+        mGA = node.mGA;
+        mData = node.mData;
+        mOgdfNode = node.mOgdfNode;
+        mLeft = node.mLeft;
+        mRight = node.mRight;
+    }
+
+    explicit Node(const Node&& node)
+    {
+        mG = std::move(node.mG);
+        mGA = std::move(node.mGA);
+        mData = std::move(node.mData);
+        mOgdfNode = std::move(node.mOgdfNode);
+        mLeft = std::move(node.mLeft);
+        mRight = std::move(node.mRight);
+    }
+
     Node<T>* setLeft(Node* left)
     {
         return left ? mLeft = makeNodeWithEdge(left) : nullptr;

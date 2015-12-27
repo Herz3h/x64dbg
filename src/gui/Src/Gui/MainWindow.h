@@ -117,7 +117,6 @@ public slots:
     void closeQWidgetTab(QWidget* qWidget);
     void executeOnGuiThread(void* cbGuiThread);
     void tabMovedSlot(int from, int to);
-    void drawGraphAtAddressSlot(dsint va);
     void chkSaveloadTabSavedOrderStateChangedSlot(bool state);
 
 private:

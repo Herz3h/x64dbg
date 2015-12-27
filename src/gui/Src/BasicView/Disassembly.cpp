@@ -1413,8 +1413,6 @@ const dsint Disassembly::currentEIP() const
 
 void Disassembly::disassembleAt(dsint parVA, dsint parCIP)
 {
-    emit drawGraphAtAddress(parVA);
-
     disassembleAt(parVA, parCIP, true, -1);
 }
 

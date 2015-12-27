@@ -80,14 +80,15 @@ private:
 
     void addAllNodes(BASICBLOCKMAP::iterator it, Node<GraphNode *> *parentNode);
     bool findBasicBlock(duint& va);
-    void readBasicBlockInstructions(BASICBLOCKMAP::iterator it, std::vector<Instruction_t>& instructionsVector);
+    void readBasicBlockInstructions(BASICBLOCKMAP::iterator it, std::vector<Instruction_t>& instructionsVector, std::vector<duint>& instructionsAddresses);
 
 public slots:
-    void drawGraphAtSlot(duint va);
+    void drawGraphAtSlot(duint va, duint eip);
     void setBasicBlocks(BASICBLOCKMAP* basicBlockInfo);
 
 private:
     bool bProgramInitialized;
+    duint mEip;
     QBeaEngine *mDisas;
     BASICBLOCKMAP *mBasicBlockInfo;
     std::unique_ptr<GRAPHNODEVECTOR, std::function<void(GRAPHNODEVECTOR*)>> mGraphNodeVector;

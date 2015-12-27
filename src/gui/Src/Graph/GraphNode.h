@@ -18,16 +18,15 @@ class GraphNode : public QFrame
 
 public:
     GraphNode();
-    GraphNode(std::vector<Instruction_t> &instructionsVector, duint address = 0);
-    GraphNode(const GraphNode & other);
-    GraphNode & operator=(const GraphNode & other);
+    GraphNode(std::vector<Instruction_t>& instructionsVector, std::vector<duint>& instructionsAddresses, duint address = 0, duint eip = 0);
+    GraphNode(const GraphNode& other);
+    GraphNode & operator=(const GraphNode& other);
     QRectF boundingRect() const;
     void paintEvent(QPaintEvent* event);
-    dsint getInstructionIndexAtPos(const QPoint &pos) const;
-    bool eventFilter(QObject *object, QEvent *event);
-//    void mousePressEvent(QMouseEvent* event);
+    dsint getInstructionIndexAtPos(const QPoint& pos) const;
+    bool eventFilter(QObject* object, QEvent* event);
     void updateTokensVector();
-    void setInstructionsVector(const std::vector<Instruction_t> &instructionsVector);
+    void setInstructionsVector(const std::vector<Instruction_t>& instructionsVector);
     void updateCache();
     void updateRichText();
     QString getLongestInstruction();
@@ -37,6 +36,7 @@ signals:
     void drawGraphAt(duint va);
 
 private:
+    duint mEip;
     duint mHighlightInstructionAt;
     duint mAddress;
     duint mLineHeight;
@@ -44,11 +44,14 @@ private:
     qreal mCachedHeight;
     const duint mSpacingX = 12;
     const duint mSpacingY = 12;
+    const duint mSpacingBreakpoint = 12;
+    const duint mWidthEipIndicatorY = 6;
     const duint mLineSpacingY = 3;
     QFont mFont = QFont("Lucida Console", 8, QFont::Normal, false);
     std::vector<Instruction_t> mInstructionsVector;
     std::vector<CapstoneTokenizer::InstructionToken> mTokensVector;
     std::vector<QList<RichTextPainter::CustomRichText_t> > mRichTextVector;
+    std::vector<duint> mInstructionsAddresses;
 };
 
 #endif //_GRAPH_NODE_H

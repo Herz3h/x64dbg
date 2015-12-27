@@ -147,7 +147,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
     mGraphView = new GraphView(this);
     mGraphView->setWindowTitle("Graph");
     mGraphView->setWindowIcon(QIcon(":/icons/images/graph.png"));
-    connect(mCpuWidget->getDisasmWidget(), SIGNAL(drawGraphAtAddress(dsint)), this, SLOT(drawGraphAtAddressSlot(dsint)));
 
     // Create the tab widget
     mTabWidget = new MHTabWidget(NULL);
@@ -1218,11 +1217,6 @@ void MainWindow::closeQWidgetTab(QWidget* qWidget)
 void MainWindow::executeOnGuiThread(void* cbGuiThread)
 {
     ((GUICALLBACK)cbGuiThread)();
-}
-
-void MainWindow::drawGraphAtAddressSlot(dsint va)
-{
-    mGraphView->drawGraphAtSlot(va);
 }
 
 void MainWindow::tabMovedSlot(int from, int to)
