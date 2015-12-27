@@ -36,6 +36,7 @@ static bool bIsAttached = false;
 static bool bSkipExceptions = false;
 static bool bBreakOnNextDll = false;
 static bool bFreezeStack = false;
+static bool bSkipMemUpdates = true;
 static int ecount = 0;
 static std::vector<ExceptionRange> ignoredExceptionRange;
 static HANDLE hEvent = 0;
@@ -872,8 +873,11 @@ static void cbLoadDll(LOAD_DLL_DEBUG_INFO* LoadDll)
         ModLoad((duint)base, modInfo.ImageSize, modInfo.ImageName);
 
     //update memory map
-    MemUpdateMap();
-    GuiUpdateMemoryView();
+    if(!bSkipMemUpdates)
+    {
+        MemUpdateMap();
+        GuiUpdateMemoryView();
+    }
 
     char modname[256] = "";
     if(ModNameFromAddr((duint)base, modname, true))
@@ -1454,6 +1458,7 @@ static void cbAttachDebugger()
     hProcess = fdProcessInfo->hProcess;
     varset("$hp", (duint)fdProcessInfo->hProcess, true);
     varset("$pid", fdProcessInfo->dwProcessId, true);
+    bSkipMemUpdates = true;
 }
 
 DWORD WINAPI threadAttachLoop(void* lpParameter)
@@ -1533,7 +1538,10 @@ void cbDetach()
     if(!DetachDebuggerEx(fdProcessInfo->dwProcessId))
         dputs("DetachDebuggerEx failed...");
     else
+    {
         dputs("Detached!");
+        bSkipMemUpdates = true;
+    }
     return;
 }
 

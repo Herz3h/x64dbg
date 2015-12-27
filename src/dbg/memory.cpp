@@ -174,7 +174,7 @@ void MemUpdateMap()
         }
 
         // Check in threads
-        for (int i = 0; i < threadList.count; i++)
+        for (int i = 0; i < threadList.count; ++i)
         {
             duint tebBase = threadList.list[i].BasicInfo.ThreadLocalBase;
             DWORD threadId = threadList.list[i].BasicInfo.ThreadId;
