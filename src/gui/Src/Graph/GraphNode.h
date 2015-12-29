@@ -35,7 +35,7 @@ public:
     duint address();
 
 signals:
-    void drawGraphAt(duint va);
+    void drawGraphAt(duint va, duint eip);
 
 private:
     duint mEip;

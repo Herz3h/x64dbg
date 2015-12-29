@@ -308,7 +308,7 @@ void ControlFlowGraph::addAllNodes(BASICBLOCKMAP::iterator it, Node<GraphNode *>
 
                 node = mTree->newNode(mGraphNodeVector->back().get());
 
-                connect(mGraphNodeVector->back().get(), SIGNAL(drawGraphAt(duint)), this, SLOT(drawGraphAtSlot(duint)), Qt::QueuedConnection);
+                connect(mGraphNodeVector->back().get(), SIGNAL(drawGraphAt(duint, duint)), this, SLOT(drawGraphAtSlot(duint, duint)), Qt::QueuedConnection);
             }
 
             Node<GraphNode*>* newParentNode = nullptr;

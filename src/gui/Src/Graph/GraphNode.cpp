@@ -2,11 +2,13 @@
 #include <iostream>
 #include "Configuration.h"
 
+using namespace std;
+
 GraphNode::GraphNode() : QWidget()
 {
 }
 
-GraphNode::GraphNode(std::vector<Instruction_t> &instructionsVector, std::vector<duint> &instructionsAddresses, duint address, duint eip)
+GraphNode::GraphNode(vector<Instruction_t> &instructionsVector, vector<duint> &instructionsAddresses, duint address, duint eip)
     :
     mAddress(address),
     mInstructionsVector(instructionsVector),
@@ -152,13 +154,15 @@ bool GraphNode::eventFilter(QObject *object, QEvent *event)
 
         duint clickedInstructionIndex = getInstructionIndexAtPos(mouseEvent->pos());
 
+        cerr << "Clicked : " << clickedInstructionIndex << endl;
+        cerr.flush();
         // No instruction clicked
         if(clickedInstructionIndex == -1)
             return true;
 
         Instruction_t clickedInstruction = mInstructionsVector.at(clickedInstructionIndex);
         if(clickedInstruction.branchDestination != 0)
-            emit drawGraphAt(clickedInstruction.branchDestination);
+            emit drawGraphAt(clickedInstruction.branchDestination, mEip);
 
         return true;
     }
@@ -194,7 +198,7 @@ void GraphNode::updateTokensVector()
     updateRichText();
 }
 
-void GraphNode::setInstructionsVector(const std::vector<Instruction_t> &instructionsVector)
+void GraphNode::setInstructionsVector(const vector<Instruction_t> &instructionsVector)
 {
     mInstructionsVector = instructionsVector;
 }
