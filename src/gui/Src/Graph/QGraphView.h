@@ -10,6 +10,7 @@ class QGraphView : public QGraphicsView
 public:
     explicit QGraphView(QWidget* parent = nullptr);
     void wheelEvent(QWheelEvent* event);
+//    void mouseMoveEvent(QMouseEvent* event);
 
 private slots:
     void scalingTime(qreal x);

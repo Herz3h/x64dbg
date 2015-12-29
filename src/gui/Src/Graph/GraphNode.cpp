@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Configuration.h"
 
-GraphNode::GraphNode() : QFrame()
+GraphNode::GraphNode() : QWidget()
 {
 }
 
@@ -36,7 +36,14 @@ GraphNode & GraphNode::operator=(const GraphNode & other)
 
 QRectF GraphNode::boundingRect() const
 {
-    return QRectF(0, 0, mCachedWidth, mCachedHeight);
+    return this->geometry();
+}
+
+QPainterPath GraphNode::shape() const
+{
+    QPainterPath p;
+    p.addRect(this->geometry());
+    return p;
 }
 
 void GraphNode::paintEvent(QPaintEvent* event)
@@ -200,6 +207,9 @@ void GraphNode::updateCache()
     mCachedWidth = metrics.width(maxInstruction) + mSpacingX + mSpacingBreakpoint;
     mCachedHeight =((metrics.height() + mLineSpacingY) * mInstructionsVector.size()) + metrics.height() + mSpacingY; // +metrics.height() => for block address line
     mLineHeight = metrics.height();
+
+    // Will get updated later from ControlFlowGraph
+    this->setGeometry(0, 0, mCachedWidth, mCachedHeight);
 }
 
 void GraphNode::updateRichText()

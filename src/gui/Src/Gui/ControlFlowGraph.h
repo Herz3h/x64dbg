@@ -7,6 +7,7 @@
 #include <QWheelEvent>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QGraphicsProxyWidget>
 #include "Bridge.h"
 #include "Tree.h"
 #include "GraphNode.h"
@@ -58,6 +59,7 @@ typedef std::map<duint, BasicBlock> BASICBLOCKMAP;
 typedef std::map<duint, Node<GraphNode *> * > NODEMAP;
 typedef std::vector<std::unique_ptr<GraphNode>> GRAPHNODEVECTOR;
 typedef std::map<ogdf::node, std::vector<std::unique_ptr<GraphEdge>> > GRAPHEDGEMAP;
+typedef std::unique_ptr<GRAPHNODEVECTOR, std::function<void(GRAPHNODEVECTOR*)>> GRAPHNODEVECTORDEL;
 
 class ControlFlowGraph : public QWidget
 {
@@ -72,11 +74,10 @@ public:
 private:
     void setupGraphLayout();
     void setupTree(duint va = 0);
-    void adjustNodesSize();
     void addGraphToScene();
+    void adjustNodesSize();
     void addNodesToScene();
     void addEdgesToScene();
-
 
     void addAllNodes(BASICBLOCKMAP::iterator it, Node<GraphNode *> *parentNode);
     bool findBasicBlock(duint& va);
@@ -89,18 +90,21 @@ public slots:
 private:
     bool bProgramInitialized;
     duint mEip;
-    QBeaEngine *mDisas;
-    BASICBLOCKMAP *mBasicBlockInfo;
-    std::unique_ptr<GRAPHNODEVECTOR, std::function<void(GRAPHNODEVECTOR*)>> mGraphNodeVector;
+    QBeaEngine* mDisas;
+    BASICBLOCKMAP* mBasicBlockInfo;
     GRAPHEDGEMAP mNodeGraphEdge;
+    GRAPHNODEVECTORDEL mGraphNodeVector;
     ogdf::Graph mG;
     std::unique_ptr<ogdf::GraphAttributes> mGA;
     std::unique_ptr<ogdf::SugiyamaLayout> mSL;
     std::unique_ptr<ogdf::OptimalHierarchyLayout> mOHL;
     std::unique_ptr<Tree<GraphNode*>> mTree;
-    QVBoxLayout *mVLayout;
-    QGraphicsScene *mScene;
-    QGraphView *mGraphicsView;
+    QVBoxLayout* mVLayout;
+    QGraphicsScene* mScene;
+    QGraphView* mGraphicsView;
+    std::vector<GraphEdge*> mGraphEdgeItems;
+    std::vector<QGraphicsProxyWidget*> mGraphNodeProxies;
+    const float mMinNodeDistance = 25.0; // this distance is min when fixedLayerDistance=False
 
 };
 

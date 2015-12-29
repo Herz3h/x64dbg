@@ -6,13 +6,14 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QFontMetrics>
+#include <QGraphicsItem>
 #include <vector>
 #include "Imports.h"
 #include "RichTextPainter.h"
 #include "capstone_gui.h"
 #include "QBeaEngine.h"
 
-class GraphNode : public QFrame
+class GraphNode : public QWidget
 {
     Q_OBJECT
 
@@ -22,6 +23,7 @@ public:
     GraphNode(const GraphNode& other);
     GraphNode & operator=(const GraphNode& other);
     QRectF boundingRect() const;
+    QPainterPath shape() const;
     void paintEvent(QPaintEvent* event);
     dsint getInstructionIndexAtPos(const QPoint& pos) const;
     bool eventFilter(QObject* object, QEvent* event);

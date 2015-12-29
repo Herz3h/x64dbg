@@ -143,7 +143,7 @@ void ControlFlowGraph::setupGraphLayout()
 
 
     mOHL = make_unique<OptimalHierarchyLayout>();
-    mOHL->nodeDistance(25.0);
+    mOHL->nodeDistance(mMinNodeDistance);
     mOHL->layerDistance(50.0);
     mOHL->fixedLayerDistance(false);
     mOHL->weightBalancing(0.0);
@@ -155,22 +155,6 @@ void ControlFlowGraph::setupGraphLayout()
     mSL->alignSiblings(false);
     mSL->setLayout(mOHL.get());
     mSL->call(*mGA);
-}
-
-void ControlFlowGraph::adjustNodesSize()
-{
-    // Adjust node size
-    ogdf::node v;
-    forall_nodes(v, mG)
-    {
-        Node<GraphNode* > *node = mTree->findNode(v);
-        if (node)
-        {
-            QRectF rect = node->data()->boundingRect();
-            mGA->width(v) = rect.width();
-            mGA->height(v) = rect.height();
-        }
-    }
 }
 
 void ControlFlowGraph::addGraphToScene()
@@ -192,13 +176,29 @@ void ControlFlowGraph::addGraphToScene()
     // Change unconditionalBranches colors to something different than for conditional branches
     setUnconditionalBranchEdgeColor();
 
-//    mGraphicsView->ensureVisible(mScene->itemsBoundingRect());
-
     mGraphicsView->setSceneRect(mScene->itemsBoundingRect());
+}
+
+void ControlFlowGraph::adjustNodesSize()
+{
+    // Adjust node size
+    ogdf::node v;
+    forall_nodes(v, mG)
+    {
+        Node<GraphNode* > *node = mTree->findNode(v);
+        if (node)
+        {
+            QRectF rect = node->data()->geometry();
+            mGA->width(v) = rect.width();
+            mGA->height(v) = rect.height();
+        }
+    }
 }
 
 void ControlFlowGraph::addNodesToScene()
 {
+    mGraphNodeProxies.clear();
+
     ogdf::node v;
     forall_nodes(v, mG)
     {
@@ -206,17 +206,20 @@ void ControlFlowGraph::addNodesToScene()
         if (node)
         {
             //draw node using x,y
-            QRectF rect = node->data()->boundingRect();
+            QRectF rect = node->data()->geometry();
             qreal x = mGA->x(v) - (rect.width()/2);
             qreal y = mGA->y(v) - (rect.height()/2);
             node->data()->setGeometry(x, y, rect.width(), rect.height());
-            mScene->addWidget(node->data());
+            auto nodeProxy = mScene->addWidget(node->data());
+            mGraphNodeProxies.push_back(nodeProxy);
         }
     }
 }
 
 void ControlFlowGraph::addEdgesToScene()
 {
+    mGraphEdgeItems.clear();
+
     //draw edges
     ogdf::edge e;
     forall_edges(e, mG)
@@ -240,12 +243,13 @@ void ControlFlowGraph::addEdgesToScene()
         auto const sourceNodeLeft = mTree->findNode(source)->left();
 
         if(sourceNodeLeft && sourceNodeLeft->data()->address() == targetGraphNode->address())
-            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_LEFT);
+            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_LEFT, mMinNodeDistance, &mGraphNodeProxies, &mGraphEdgeItems);
         else
-            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_RIGHT);
+            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_RIGHT, mMinNodeDistance, &mGraphNodeProxies, &mGraphEdgeItems);
 
         mNodeGraphEdge[source].push_back(std::unique_ptr<GraphEdge>(edge));
         mScene->addItem(edge);
+        mGraphEdgeItems.push_back(edge);
     }
 }
 
@@ -416,5 +420,3 @@ void ControlFlowGraph::setBasicBlocks(BASICBLOCKMAP *basicBlockInfo)
 {
     mBasicBlockInfo = basicBlockInfo;
 }
-
-

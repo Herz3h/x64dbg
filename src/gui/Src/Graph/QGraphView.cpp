@@ -1,5 +1,6 @@
 #include "QGraphView.h"
 #include <QTimeLine>
+#include <QToolTip>
 #include <iostream>
 
 QGraphView::QGraphView(QWidget* parent)
@@ -7,6 +8,7 @@ QGraphView::QGraphView(QWidget* parent)
       mNumScheduledScalings(0)
 {
     bAnimationFinished = false;
+    setMouseTracking(true);
 }
 
 void QGraphView::wheelEvent(QWheelEvent* event)
@@ -37,6 +39,12 @@ void QGraphView::wheelEvent(QWheelEvent* event)
     anim->start();
     bAnimationFinished = false;
 }
+
+//void QGraphView::mouseMoveEvent(QMouseEvent *event)
+//{
+//    auto mousePos = this->mapToScene(event->pos());
+//    QToolTip::showText(event->globalPos(), "x : " + QString::number(mousePos.x()) + ", " + QString::number(mousePos.y()));
+//}
 
 void QGraphView::scalingTime(qreal x)
 {
