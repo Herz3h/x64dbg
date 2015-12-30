@@ -163,6 +163,7 @@ void ControlFlowGraph::addGraphToScene()
 
     mNodeGraphEdge.clear();
     mScene->clear();
+    mGraphicsView->viewport()->repaint(); // removes some artifacts when drawing a new graph
 
     adjustNodesSize();
 
@@ -188,7 +189,7 @@ void ControlFlowGraph::adjustNodesSize()
         Node<GraphNode* > *node = mTree->findNode(v);
         if (node)
         {
-            QRectF rect = node->data()->geometry();
+            QRectF rect = node->data()->boundingRect();
             mGA->width(v) = rect.width();
             mGA->height(v) = rect.height();
         }
@@ -197,7 +198,7 @@ void ControlFlowGraph::adjustNodesSize()
 
 void ControlFlowGraph::addNodesToScene()
 {
-    mGraphNodeProxies.clear();
+    mGraphNodeItems.clear();
 
     ogdf::node v;
     forall_nodes(v, mG)
@@ -206,12 +207,12 @@ void ControlFlowGraph::addNodesToScene()
         if (node)
         {
             //draw node using x,y
-            QRectF rect = node->data()->geometry();
+            QRectF rect = node->data()->boundingRect();
             qreal x = mGA->x(v) - (rect.width()/2);
             qreal y = mGA->y(v) - (rect.height()/2);
             node->data()->setGeometry(x, y, rect.width(), rect.height());
-            auto nodeProxy = mScene->addWidget(node->data());
-            mGraphNodeProxies.push_back(nodeProxy);
+            mScene->addItem(node->data());
+            mGraphNodeItems.push_back(node->data());
         }
     }
 }
@@ -242,10 +243,10 @@ void ControlFlowGraph::addEdgesToScene()
         GraphEdge* edge = nullptr;
         auto const sourceNodeLeft = mTree->findNode(source)->left();
 
-        if(sourceNodeLeft && sourceNodeLeft->data()->address() == targetGraphNode->address())
-            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_LEFT, mMinNodeDistance, &mGraphNodeProxies, &mGraphEdgeItems);
+        if(sourceNodeLeft && sourceNodeLeft->data()->getAddress() == targetGraphNode->getAddress())
+            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_LEFT, mMinNodeDistance, &mGraphNodeItems, &mGraphEdgeItems);
         else
-            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_RIGHT, mMinNodeDistance, &mGraphNodeProxies, &mGraphEdgeItems);
+            edge = new GraphEdge(start, end, bends, sourceRect, targetRect, GraphEdge::EDGE_RIGHT, mMinNodeDistance, &mGraphNodeItems, &mGraphEdgeItems);
 
         mNodeGraphEdge[source].push_back(std::unique_ptr<GraphEdge>(edge));
         mScene->addItem(edge);
@@ -320,7 +321,7 @@ void ControlFlowGraph::addAllNodes(BASICBLOCKMAP::iterator it, Node<GraphNode *>
                 parentNodeLeftRight = parentNode->right();
 
             // Edge already exists between parentNode and left / right, we've been here before..
-            if(parentNodeLeftRight && (parentNodeLeftRight->data()->address() == left || parentNodeLeftRight->data()->address() == right))
+            if(parentNodeLeftRight && (parentNodeLeftRight->data()->getAddress() == left || parentNodeLeftRight->data()->getAddress() == right))
                 return;
 
             if(i == 0)

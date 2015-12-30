@@ -52,12 +52,7 @@ void GraphView::setControlFlowInfosSlot(duint *controlFlowInfos)
         auto controlFlowStruct = reinterpret_cast<CONTROLFLOWINFOS*>(controlFlowInfos);
         auto basicBlockInfo = reinterpret_cast<BASICBLOCKMAP*>(controlFlowStruct->blocks);
 
-        // TODO : Fix this
-        if(!basicBlockInfo)
-        {
-            mControlFlowGraph->startControlFlowAnalysis();
-            return;
-        }
+        delete controlFlowStruct;
 
         mControlFlowGraph->setBasicBlocks(basicBlockInfo);
         mControlFlowGraph->drawGraphAtSlot(mEip, mEip);

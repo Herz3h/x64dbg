@@ -36,7 +36,7 @@ public:
     {
         auto it = std::find_if(mOgdfDataMap.begin(), mOgdfDataMap.end(), [address](const std::pair<ogdf::node, Node<T>* > &itr)
         {
-            return itr.second && itr.second->data() && itr.second->data()->address() == address;
+            return itr.second && itr.second->data() && itr.second->data()->getAddress() == address;
         });
 
         // If found

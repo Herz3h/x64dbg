@@ -137,10 +137,10 @@ void ControlFlowAnalysis::SetMarkers()
 void ControlFlowAnalysis::sendBasicBlocksInfo()
 {
     auto pBasicBlock = new BASICBLOCKMAP(_blocks);
-    auto ctrlFlow = std::make_unique<CONTROLFLOWINFOS>();
+    auto ctrlFlow = new CONTROLFLOWINFOS;
     ctrlFlow->blocks = reinterpret_cast<duint*>(pBasicBlock);
 
-    GuiSetControlFlowInfos(ctrlFlow.get());
+    GuiSetControlFlowInfos(ctrlFlow);
 }
 
 void ControlFlowAnalysis::BasicBlockStarts()

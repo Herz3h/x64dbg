@@ -103,7 +103,7 @@ private:
     QGraphicsScene* mScene;
     QGraphView* mGraphicsView;
     std::vector<GraphEdge*> mGraphEdgeItems;
-    std::vector<QGraphicsProxyWidget*> mGraphNodeProxies;
+    std::vector<GraphNode*> mGraphNodeItems;
     const float mMinNodeDistance = 25.0; // this distance is min when fixedLayerDistance=False
 
 };

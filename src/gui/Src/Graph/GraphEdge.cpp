@@ -3,14 +3,14 @@
 
 using namespace std;
 
-GraphEdge::GraphEdge(QPointF start, QPointF end, ogdf::DPolyline bends, QRectF sourceRect, QRectF targetRect, EDGE_TYPE edgeType, float minNodeDistance, std::vector<QGraphicsProxyWidget*>* graphNodeProxies, std::vector<GraphEdge*>* graphNodeItems)
+GraphEdge::GraphEdge(QPointF start, QPointF end, ogdf::DPolyline bends, QRectF sourceRect, QRectF targetRect, EDGE_TYPE edgeType, float minNodeDistance, std::vector<GraphNode*>* graphNodeItems, std::vector<GraphEdge*>* graphEdgeItems)
     :
     QGraphicsItem(),
     mEdgeType(edgeType),
     mMinNodeDistance(minNodeDistance),
     mBends(bends),
-    mGraphNodeProxies(graphNodeProxies),
-    mGraphEdgeItems(graphNodeItems)
+    mGraphNodeItems(graphNodeItems),
+    mGraphEdgeItems(graphEdgeItems)
 {
 
     if(mEdgeType == EDGE_LEFT)
@@ -425,11 +425,11 @@ bool GraphEdge::isEdgeCollidingWithNodes(const QPolygonF& edgePolygon) const
     QPainterPath tempPath;
     tempPath.addPolygon(edgePolygon);
 
-    for(QGraphicsProxyWidget* nodeProxy : *mGraphNodeProxies)
+    for(GraphNode* nodeItem : *mGraphNodeItems)
     {
         // TODO : Fix boundingRect(), maybe have to rewrite GraphNode to inherit a QGraphicsItem rather than a QWidget
         // Using findIntersectionsPoints here instead of nodeProxy->collidesWithPath because nodeProxy->boundingRect() gives wrong x/y positions
-        auto intersectPoints = findIntersectionPoints(nodeProxy->geometry(), tempPath).size();
+        auto intersectPoints = findIntersectionPoints(nodeItem->geometry(), tempPath).size();
 
         if(intersectPoints)
             return true;

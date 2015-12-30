@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QGraphicsProxyWidget>
 #include "GraphProcessor.h"
+#include "Graphnode.h"
 
 
 QList<QLineF> getLinesFromRect(QRectF& rect);
@@ -27,7 +28,7 @@ public:
         TO_LEFT
     };
 
-    GraphEdge(QPointF start, QPointF end, ogdf::DPolyline bends, QRectF sourceRect, QRectF targetRect, EDGE_TYPE edgeType, float minNodeDistance, std::vector<QGraphicsProxyWidget*>* graphNodeProxies, std::vector<GraphEdge*>* graphNodeItems);
+    GraphEdge(QPointF start, QPointF end, ogdf::DPolyline bends, QRectF sourceRect, QRectF targetRect, EDGE_TYPE edgeType, float minNodeDistance, std::vector<GraphNode*>* graphNodeItems, std::vector<GraphEdge*>* graphEdgeItems);
     QRectF boundingRect() const;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
     qreal calculateDistance(QPointF p1, QPointF p2);
@@ -58,7 +59,7 @@ private:
     ogdf::DPolyline mBends;
     const qreal mArrowLen = 7;
     std::vector<GraphEdge*>* mGraphEdgeItems;
-    std::vector<QGraphicsProxyWidget*>* mGraphNodeProxies;
+    std::vector<GraphNode*>* mGraphNodeItems;
 };
 
 #endif //_GRAPH_EDGE_H
